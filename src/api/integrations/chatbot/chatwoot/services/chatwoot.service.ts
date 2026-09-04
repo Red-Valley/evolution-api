@@ -435,12 +435,11 @@ export class ChatwootService {
       return null;
     }
 
-    // Direct search by query (q) - most common way to search by identifier/email/phone
-    const contact = (await (client as any).get('contacts/search', {
-      params: {
-        q: identifier,
-        sort: 'name',
-      },
+    // El cliente del SDK no expone un .get() generico: la busqueda va por
+    // client.contacts.search, el mismo patron que usa findContact().
+    const contact = (await client.contacts.search({
+      accountId: this.provider.accountId,
+      q: identifier,
     })) as any;
 
     if (contact && contact.data && contact.data.payload && contact.data.payload.length > 0) {
@@ -453,15 +452,19 @@ export class ChatwootService {
     }
 
     // Try search by attribute
-    const contactByAttr = (await (client as any).post('contacts/filter', {
-      payload: [
-        {
-          attribute_key: 'identifier',
-          filter_operator: 'equal_to',
-          values: [identifier],
-          query_operator: null,
-        },
-      ],
+    const contactByAttr = (await chatwootRequest(this.getClientCwConfig(), {
+      method: 'POST',
+      url: `/api/v1/accounts/${this.provider.accountId}/contacts/filter`,
+      body: {
+        payload: [
+          {
+            attribute_key: 'identifier',
+            filter_operator: 'equal_to',
+            values: [identifier],
+            query_operator: null,
+          },
+        ],
+      },
     })) as any;
 
     if (contactByAttr && contactByAttr.payload && contactByAttr.payload.length > 0) {
@@ -763,7 +766,7 @@ export class ChatwootService {
             if (!findParticipant.name || findParticipant.name === chatId) {
               await this.updateContact(instance, findParticipant.id, {
                 name: body.pushName,
-                avatar_url: picture_url.profilePictureUrl || null,
+                avatar_url: picture_url?.profilePictureUrl || null,
               });
             }
           } else {
@@ -773,7 +776,7 @@ export class ChatwootService {
               filterInbox.id,
               false,
               body.pushName,
-              picture_url.profilePictureUrl || null,
+              picture_url?.profilePictureUrl || null,
               participantJid,
             );
           }
@@ -813,7 +816,7 @@ export class ChatwootService {
             filterInbox.id,
             isGroup,
             nameContact,
-            picture_url.profilePictureUrl || null,
+            picture_url?.profilePictureUrl || null,
             phoneNumber,
           );
         }
