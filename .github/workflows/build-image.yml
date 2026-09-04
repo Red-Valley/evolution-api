@@ -32,6 +32,10 @@ jobs:
           file: ./Dockerfile
           platforms: linux/amd64
           push: true
-          tags: ghcr.io/red-valley/evolution-api:2.3.7-pr2718
+          # Tag inmutable por build ademas del movil: reutilizar solo el tag movil
+          # hace que el servidor pueda quedarse con la imagen local vieja.
+          tags: |
+            ghcr.io/red-valley/evolution-api:2.3.7-pr2718
+            ghcr.io/red-valley/evolution-api:2.3.7-pr2718-b${{ github.run_number }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
